@@ -6,13 +6,17 @@
 #include <ESP8266WiFi.h>
 #include <HttpClient.h>
 
-const int PRESSURE_THRESHOLD = 350;
+// const int PRESSURE_THRESHOLD = 350;
 
 const char* ssid     = "Harshita's iPhone";
 const char* password = "hiyabuddy";
  
 /////////////////////////////////  
-const int analogInPin = 12;  // Analog input pin that sensors is attached to (DEFAULT=A2)  
+const int analogInPin = A0;  // Analog input pin that sensors is attached to (DEFAULT=A2)  
+int readingDelay = 10;  // Delay between each reading (DEFAULT=10)  
+int readingsPerSample = 10;  // Number of reaings per sample / loop (DEFAULT=10)  
+boolean singleRead = false;  // Series of readings (False) or single reading (TRUE) (DEFAULT=FALSE)  
+boolean enableVibes = true;  // LED  
 int numberOfVibrators = 3;
 const int vibratePins[] = {5,4,3};
 /////////////////////////////////  
@@ -41,22 +45,22 @@ XivelyDatastream datastream2[] = {
 XivelyFeed huzzah2(FEED2, datastream2, 1);
 
 
-XivelyFeed selfFeed = huzzah1;
-XivelyFeed pairFeed = huzzah2;
-char const* selfXivelyKey = xivelyKey1;
-char const* pairXivelyKey = xivelyKey2;
-#define SELF_FEED_ID = FEED1
-#define PAIR_FEED_ID = FEED2
+// XivelyFeed selfFeed = huzzah1;
+// XivelyFeed pairFeed = huzzah2;
+// char const* selfXivelyKey = xivelyKey1;
+// char const* pairXivelyKey = xivelyKey2;
+// #define SELF_FEED_ID = FEED1
+// #define PAIR_FEED_ID = FEED2
 
 WiFiClient client;
 XivelyClient xivelyclient(client);
 
-// XivelyFeed selfFeed = huzzah2;
-// XivelyFeed pairFeed = huzzah1;
-// char const* selfXivelyKey = xivelyKey2;
-// char const* pairXivelyKey = xivelyKey1;
-// #define FEED_ID = FEED2
-// #define PAIR_FEED_ID = FEED1
+XivelyFeed selfFeed = huzzah2;
+XivelyFeed pairFeed = huzzah1;
+char const* selfXivelyKey = xivelyKey2;
+char const* pairXivelyKey = xivelyKey1;
+#define FEED_ID = FEED2
+#define PAIR_FEED_ID = FEED1
 
 void wifiSetup(void) {
   // Serial.print("Connecting to ");
@@ -93,7 +97,7 @@ void disableVibrators(void) {
 }
 
 int readAnalog(void) {
-  analogReading = digitalRead(analogInPin);  
+  analogReading = analogRead(analogInPin);  
 
   // Serial.print("Analog reading = ***************************************"); //
   Serial.println(analogReading);     // the raw analog reading
@@ -138,7 +142,6 @@ void setup(void) {
   for (int i = 0; i < numberOfVibrators ; i++) {
     pinMode(vibratePins[i], OUTPUT);
   }
-  pinMode(analogInPin, INPUT);
  wifiSetup();
 }
 
@@ -147,7 +150,7 @@ void loop(void) {
   
   updateSelfPressure();
 
-  if (pairPressed() < PRESSURE_THRESHOLD) {
+  if (pairPressed()) {
     vibrateWithWait(10);
   }
   else {
