@@ -18,13 +18,7 @@ int vibratePins[] = {2};
 //char analogPin = AO;     // the FSR and 10K pulldown are connected to a0
 int analogReading;     // the analog reading from the FSR resistor divider
 
-void setup(void) {
-  // We'll send debugging information via the Serial monitor
-  Serial.begin(9600);   
-  for (int i = 0; i < numberOfVibrators ; i++) {
-    pinMode(vibratePins[i], OUTPUT);
-  }
-
+void wifiSetup(void) {
   Serial.print("Connecting to ");
   Serial.println(ssid);
   
@@ -39,13 +33,54 @@ void setup(void) {
   Serial.println("WiFi connected");  
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
-
 }
 
- 
-void loop(void) {
 
-  WiFiClient client;
+void setup(void) {
+  // We'll send debugging information via the Serial monitor
+  Serial.begin(9600);   
+  for (int i = 0; i < numberOfVibrators ; i++) {
+    pinMode(vibratePins[i], OUTPUT);
+  }
+
+//  wifiSetup();
+}
+
+
+
+int analogLevel(int analog) {
+//returns 1 for vibrate and 0 for don't vibrate
+  if (analogReading < 395) {
+    return 1;
+  }
+  else {
+    return 0;
+  }
+  
+//  if (analogReading < 1) 
+//  {
+//    Serial.println(" - No pressure");
+//  } 
+//  else if (analogReading > 410) 
+//  {
+//    Serial.println(" - Light touch");
+//  } 
+//  else if (analogReading > 400) 
+//  {
+//    Serial.println(" - Light squeeze");
+//  } 
+//  else if (analogReading > 390) 
+//  {
+//    Serial.println(" - Medium squeeze");
+//  } 
+//  else 
+//  {
+//    Serial.println(" - Big squeeze");
+//  }
+}
+
+void HTTPPing(void){
+    WiFiClient client;
   const int httpPort = 80;
   if (!client.connect(host, httpPort)) {
     Serial.println("connection failed");
@@ -72,43 +107,48 @@ void loop(void) {
   Serial.println();
   Serial.println("closing connection");
 
+}
 
 
+void vibrateWithWait(int vibeTime) {
+    Serial.print("Initiating vibration");
+    Serial.println();
+    digitalWrite(2, HIGH);
+    for (int i = 0; i < numberOfVibrators ; i++) {
+      digitalWrite(vibratePins[i], HIGH);
+    }  
+    delay(vibeTime);
+}
 
+void disableVibrators(void) {
+  Serial.print("Turning vibrate off");
+    Serial.println();
+    for (int i = 0; i < numberOfVibrators ; i++) {
+      digitalWrite(vibratePins[i], LOW);
+    }  
+}
 
-  for (int i = 0; i < numberOfVibrators ; i++) {
-    digitalWrite(vibratePins[i], HIGH);
-  }
-
-
-
-
-//  digitalWrite(2, HIGH);
+int readAnalog(void) {
   analogReading = analogRead(A0);  
- 
-  Serial.print("Analog reading = ");
+
+  Serial.print("Analog reading = ***************************************"); //
   Serial.print(analogReading);     // the raw analog reading
+  Serial.println();
+
+  return analogReading;
+}
  
-  // We'll have a few threshholds, qualitatively determined
-  if (analogReading < 1) 
-  {
-    Serial.println(" - No pressure");
-  } 
-  else if (analogReading > 600) 
-  {
-    Serial.println(" - Light touch");
-  } 
-  else if (analogReading > 560) 
-  {
-    Serial.println(" - Light squeeze");
-  } 
-  else if (analogReading > 545) 
-  {
-    Serial.println(" - Medium squeeze");
-  } 
-  else 
-  {
-    Serial.println(" - Big squeeze");
+void loop(void) {
+  
+//  HTTPing();
+  
+  
+  if (analogLevel(readAnalog())) {
+    vibrateWithWait(1000);
   }
+  else {
+    disableVibrators();
+  }
+
   delay(1000);
 } 
